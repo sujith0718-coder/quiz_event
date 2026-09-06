@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const teamController_js_1 = require("../controllers/teamController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const rbac_js_1 = require("../middleware/rbac.js");
+const router = (0, express_1.Router)();
+router.post('/create', auth_js_1.authenticateToken, teamController_js_1.createTeam);
+router.post('/join', auth_js_1.authenticateToken, teamController_js_1.joinTeam);
+router.get('/me', auth_js_1.authenticateToken, teamController_js_1.getMyTeam);
+router.get('/all', auth_js_1.authenticateToken, rbac_js_1.requireAdmin, teamController_js_1.getAllTeams);
+exports.default = router;

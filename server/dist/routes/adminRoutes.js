@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const adminController_js_1 = require("../controllers/adminController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const rbac_js_1 = require("../middleware/rbac.js");
+const router = (0, express_1.Router)();
+router.get('/submissions', auth_js_1.authenticateToken, rbac_js_1.requireAdmin, adminController_js_1.getSubmissions);
+router.get('/analytics', auth_js_1.authenticateToken, rbac_js_1.requireAdmin, adminController_js_1.getAnalytics);
+exports.default = router;

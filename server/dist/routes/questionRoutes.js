@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const questionController_js_1 = require("../controllers/questionController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const rbac_js_1 = require("../middleware/rbac.js");
+const router = (0, express_1.Router)();
+router.get('/participant', auth_js_1.authenticateToken, questionController_js_1.getQuestionsForParticipant);
+router.get('/admin', auth_js_1.authenticateToken, rbac_js_1.requireAdmin, questionController_js_1.getQuestionsForAdmin);
+router.post('/', auth_js_1.authenticateToken, rbac_js_1.requireAdmin, questionController_js_1.createQuestion);
+router.put('/:id', auth_js_1.authenticateToken, rbac_js_1.requireAdmin, questionController_js_1.updateQuestion);
+router.delete('/:id', auth_js_1.authenticateToken, rbac_js_1.requireAdmin, questionController_js_1.deleteQuestion);
+exports.default = router;
