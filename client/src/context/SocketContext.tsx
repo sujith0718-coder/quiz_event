@@ -12,14 +12,15 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const { user } = useAuth();
 
   useEffect(() => {
-    // Initialize socket connection
-    const socketInstance = io(window.location.origin.replace(':5173', ':5000'), {
+    const socketInstance = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
     });
@@ -28,7 +29,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('[Socket.IO] Connected to backend server:', socketInstance.id);
       setIsConnected(true);
 
-      // Re-join admin room if admin
       if (user?.role === 'ADMIN') {
         socketInstance.emit('join:admin');
       }
