@@ -17,6 +17,8 @@ import submissionRoutes from './routes/submissionRoutes.js';
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import hintRoutes from './routes/hintRoutes.js';
 
 dotenv.config();
 
@@ -41,6 +43,8 @@ app.use('/api/submissions', submissionRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/questions', hintRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {
