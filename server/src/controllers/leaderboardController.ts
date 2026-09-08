@@ -14,7 +14,7 @@ export const computeLeaderboard = async (eventId: string, isParticipant: boolean
     .populate('members', 'name')
     .sort({ score: -1, completedAt: 1, createdAt: 1 });
 
-  const formattedRankings = teams.map((team, index) => {
+  const formattedRankings = teams.map((team: any, index: number) => {
     const solvedCount = Math.max(0, team.currentQuestionOrder - 1);
     return {
       rank: index + 1,

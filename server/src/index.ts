@@ -29,30 +29,16 @@ const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // CORS & Middleware
 app.use(cors({ origin: true, credentials: true }));
+app.options('*', cors());
 app.use(express.json());
 
 // Initialize Socket.IO
 initSocketServer(httpServer, CLIENT_URL);
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/teams', teamRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/questions', questionRoutes);
-app.use('/api/submissions', submissionRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/questions', hintRoutes);
-
-// Health Check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Quiz Competition Engine', timestamp: new Date() });
-});
-
 // Auto-seed admin user & initial event
+let isSeeded = false;
 const seedDefaultData = async () => {
+  if (isSeeded) return;
   try {
     const adminCount = await User.countDocuments({ role: 'ADMIN' });
     if (adminCount === 0) {
@@ -81,22 +67,67 @@ const seedDefaultData = async () => {
     if (event) {
       await seedQuestionsIfEmpty(event._id.toString());
     }
+    isSeeded = true;
   } catch (err) {
     console.error('[Seed] Error seeding default data:', err);
   }
 };
 
-// Start Server
-const startServer = async () => {
-  await connectDB();
-  await seedDefaultData();
+// DB Connection & Seeding Middleware for Serverless / Express
+app.use(async (req, res, next) => {
+  if (req.path === '/api/health') return next();
+  try {
+    await connectDB();
+    await seedDefaultData();
+    next();
+  } catch (error: any) {
+    console.error('[DB Middleware Error]:', error);
+    res.status(500).json({ error: 'Database connection failed: ' + (error?.message || 'Unknown error') });
+  }
+});
 
-  httpServer.listen(PORT, () => {
-    console.log(`====================================================`);
-    console.log(` 🚀 Quiz Platform API Server running on port ${PORT}`);
-    console.log(` 🌐 Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`====================================================`);
-  });
-};
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Quiz Competition Engine API Server is active.' });
+});
 
-startServer();
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/questions', questionRoutes);
+app.use('/api/submissions', submissionRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/questions', hintRoutes);
+
+// Health Check
+app.get('/api/health', async (req, res) => {
+  try {
+    await connectDB();
+    res.json({ status: 'ok', service: 'Quiz Competition Engine', timestamp: new Date() });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
+// If not on Vercel serverless, start standalone HTTP server
+if (!process.env.VERCEL) {
+  const startServer = async () => {
+    await connectDB();
+    await seedDefaultData();
+
+    httpServer.listen(PORT, () => {
+      console.log(`====================================================`);
+      console.log(` 🚀 Quiz Platform API Server running on port ${PORT}`);
+      console.log(` 🌐 Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`====================================================`);
+    });
+  };
+
+  startServer();
+}
+
+export default app;

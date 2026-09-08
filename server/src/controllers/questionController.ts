@@ -123,11 +123,11 @@ export const getQuestionsForParticipant = async (req: AuthRequest, res: Response
       teamId: team._id,
       isCorrect: true,
     });
-    const solvedQuestionIds = new Set(solvedSubmissions.map((s) => s.questionId.toString()));
+    const solvedQuestionIds = new Set(solvedSubmissions.map((s: any) => s.questionId.toString()));
 
     // Filter questions: Only reveal unlocked questions (order <= team.currentQuestionOrder)
     // CRITICAL SECURITY RULE: Strip `correctAnswer` before sending to participant!
-    const unlockedQuestions = allEventQuestions.map((q) => {
+    const unlockedQuestions = allEventQuestions.map((q: any) => {
       const isUnlocked = q.order <= team.currentQuestionOrder;
       const isSolved = solvedQuestionIds.has(q._id.toString());
 

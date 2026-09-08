@@ -1,30 +1,44 @@
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
+let isConnecting = false;
+
 export const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  if (isConnecting) {
+    while (mongoose.connection.readyState === 2) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return;
+  }
+
+  isConnecting = true;
   const mongoUri = process.env.MONGODB_URI;
 
-  if (mongoUri) {
-    try {
-      console.log('[DB] Connecting to configured MongoDB...');
+  try {
+    if (mongoUri) {
+      console.log('[DB] Connecting to configured MongoDB Atlas...');
       await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
       console.log('[DB] Connected to MongoDB database successfully.');
       return;
-    } catch (error: any) {
-      console.error(`[DB] Configured MongoDB connection failed: ${error.message}`);
-      console.error('[DB] In deployment, check MONGODB_URI instead of falling back to an ephemeral database.');
-      throw error;
     }
-  }
 
-  try {
-    console.log('[DB] MONGODB_URI not supplied. Starting in-memory MongoDB for local/demo use...');
-    const mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-    await mongoose.connect(uri);
-    console.log(`[DB] Connected to In-Memory MongoDB instance at: ${uri}`);
-  } catch (memError) {
-    console.error('[DB] Critical: Failed to start in-memory MongoDB server.', memError);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      console.log('[DB] MONGODB_URI not supplied. Starting in-memory MongoDB for local use...');
+      const mongod = await MongoMemoryServer.create();
+      const uri = mongod.getUri();
+      await mongoose.connect(uri);
+      console.log(`[DB] Connected to In-Memory MongoDB instance at: ${uri}`);
+    } else {
+      throw new Error('MONGODB_URI environment variable is required on Vercel deployment.');
+    }
+  } catch (error: any) {
+    console.error(`[DB] MongoDB connection failed: ${error.message}`);
+    throw error;
+  } finally {
+    isConnecting = false;
   }
 };

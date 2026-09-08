@@ -12,7 +12,7 @@ export const initSocketServer = (httpServer: HTTPServer, clientUrl: string): Soc
     },
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', (socket: any) => {
     console.log(`[Socket.IO] Client connected: ${socket.id}`);
 
     socket.on('join:event', (eventId: string) => {
